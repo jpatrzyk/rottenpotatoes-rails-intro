@@ -11,19 +11,31 @@ class MoviesController < ApplicationController
   end
 
   def index
+    if (!params[:ratings] && session[:ratings]) || (!params[:sort] && session[:sort])
+      flash.keep
+      ratings = params[:ratings] || session[:ratings]
+      sort_by = params[:sort] || session[:sort]
+      redirect_to movies_path(:ratings => ratings, :sort => sort_by)
+    end
+    
     @all_ratings = Movie.all_ratings
+    
     sort_by = params[:sort]
     ratings = params[:ratings]
+    
     if ratings
-      @movies = Movie.where(:rating => ratings.keys)
+      @movies = Movie.where(:rating => ratings.keys).order(sort_by)
+      @selected = ratings.keys
     else
       @movies = Movie.order(sort_by)
+      @selected = @all_ratings
     end
 
     @title_header_class = 'hilite' if sort_by == 'title'
     @release_date_header_class = 'hilite' if sort_by == 'release_date'
     
-    @selected = ratings ? ratings.keys : @all_ratings 
+    session[:sort] = sort_by
+    session[:ratings] = ratings
   end
 
   def new
